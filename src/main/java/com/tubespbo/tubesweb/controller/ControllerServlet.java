@@ -55,17 +55,26 @@ public class ControllerServlet extends HttpServlet {
                 ActionInterface actionInstance = (ActionInterface) Class.forName(actionClassName).getDeclaredConstructor().newInstance();
                 nextView = actionInstance.execute(request);
 
-                if (nextView != null && !nextView.contains("controller")) {
-                    nextView = "/WEB-INF/page/" + nextView;
+                // --- AWAL PERUBAHAN ---
+                // Cek apakah action meminta redirect.
+                if (nextView.startsWith("redirect:")) {
+                    // Hapus prefix "redirect:" dan lakukan redirect.
+                    String redirectUrl = nextView.substring(9);
+                    response.sendRedirect(request.getContextPath() + "/" + redirectUrl);
+                } else {
+                    // Jika tidak, lakukan forward seperti biasa.
+                    if (nextView != null && !nextView.contains("controller")) {
+                        nextView = "/WEB-INF/Page/" + nextView;
+                    }
+                    rds = request.getRequestDispatcher(nextView);
+                    rds.forward(request, response);
                 }
-
-                rds = request.getRequestDispatcher(nextView);
-                rds.forward(request, response);
+                // --- AKHIR PERUBAHAN ---
 
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, "Controller Servlet Error", ex);
                 request.setAttribute("errorMessage", ex.getMessage());
-                rds = request.getRequestDispatcher("/WEB-INF/page/error.jsp");
+                rds = request.getRequestDispatcher("/WEB-INF/Page/error.jsp");
                 rds.forward(request, response);
             }
         } else {
